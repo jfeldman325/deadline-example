@@ -1,446 +1,447 @@
-workers:
-  images:
-  - name: houdini-cpu-epyc
-    enabled: true
-    image: registry.gitlab.com/coreweave/render-images/houdini-base:1
-    users: &users
-    - userName: render
-      groupName: service
-      uid: 3001
-      gid: 3001
-      home: /home/render
-      shell: /bin/bash
-      renderUser: true
-    pulse:
-      enabled: false
-    scale:
-      maxReplicas: 1000
-      minReplicas: 0
-      pollingNames:
-      - name: houdini-cpu-epyc
-        type: Group
-      scalingFactor: 1
-    affinity:
-      nodeAffinity:
-        preferredDuringSchedulingIgnoredDuringExecution:
-        - preference:
-            matchExpressions:
-            - key: topology.kubernetes.io/region
-              operator: In
-              values:
-              - LGA1
-          weight: 100
-        requiredDuringSchedulingIgnoredDuringExecution:
-          nodeSelectorTerms:
-          - matchExpressions:
-            - key: node.coreweave.cloud/cpu
-              operator: In
-              values:
-              - amd-epyc-rome
-              - amd-epyc-milan
-            - key: node.coreweave.cloud/class
-              operator: In
-              values:
-              - cpu
-    resources:
-      limits:
-        cpu: 35
-        memory: 130Gi
-      requests:
-        cpu: 35
-        memory: 129Gi
-    env: &houdini-env
-    - name: SESI_LMHOST
-      value: sidefx-ls-2.int.coreweave.com
-    - name: ARNOLD_LICENSE_ORDER
-      value: network
-    - name: ADSKFLEX_LICENSE_FILE
-      value: 2080@autodesk-ls.int.coreweave.com
-    - name: REDSHIFT_LICENSEPATH
-      value: "/mnt/software/licenses/cw-redshift.lic"
-    - name: HOUDINI_PATH
-      value: "/mnt/software/redshift/3.5.06/redshift4houdini/19.5.303:/opt/hfs19.0/bin:/opt/hfs19.0/houdini:/mnt/software/arnold/htoa/6.1.3.1"  
-    - name: LD_LIBRARY_PATH
-      value: /usr/local/nvidia/lib:/usr/local/nvidia/lib64
-    - name: NVIDIA_DRIVER_CAPABILITIES
-      value: all
-    - name: DISPLAY
-      value: ":8"
-    - name: HOUDINI_OCL_DEVICENUMBER
-      value: "'0'"
-    groups:
-    - houdini-cpu-epyc
-    pools:
-    - vfx
-    volumeMounts: &houdini-volumeMounts
-    - name: render-output # Mounting in our PVC as /data so it's accessible to our pod.
-      mountPath: /mnt/render-output
-    - name: software
-      mountPath: /mnt/software
-    - name: assets
-      mountPath: /mnt/assets
-    - name: demo-project-1
-      mountPath: /mnt/projects/demo-project-1
-    - name: completed
-      mountPath: /mnt/completed
-    volumes: &houdini-volumes
-    - name: render-output
-      persistentVolumeClaim:
-        claimName: render-output-lga1
-    - name: software
-      persistentVolumeClaim:
-        claimName: software-lga1
-    - name: assets
-      persistentVolumeClaim:
-        claimName: assets-lga1
-    - name: demo-project-1
-      persistentVolumeClaim:
-        claimName: demo-project-1-lga1
-    - name: completed
-      persistentVolumeClaim:
-        claimName: completed-lga1
-  - name: houdini-cpu-xeon
-    enabled: true
-    users: *users
-    image: registry.gitlab.com/coreweave/render-images/houdini-base:1
-    pulse:
-      enabled: false
-    scale:
-      maxReplicas: 1000
-      minReplicas: 0
-      pollingNames:
-      - name: houdini-cpu-xeon
-        type: Group
-      scalingFactor: 1
-    affinity:
-      nodeAffinity:
-        requiredDuringSchedulingIgnoredDuringExecution:
-          nodeSelectorTerms:
-          - matchExpressions:
-            - key: node.coreweave.cloud/cpu
-              operator: In
-              values:
-              - intel-xeon-v3
-              - intel-xeon-v4
-            - key: node.coreweave.cloud/class
-              operator: In
-              values:
-              - cpu
-        preferredDuringSchedulingIgnoredDuringExecution:
-        - preference:
-            matchExpressions:
-            - key: topology.kubernetes.io/region
-              operator: In
-              values:
-              - LGA1
-          weight: 100
-    resources:
-      limits:
-        cpu: 70
-        memory: 180Gi
-      requests:
-        cpu: 70
-        memory: 180Gi
-    env: *houdini-env
-    groups:
-    - houdini-cpu-xeon
-    pools:
-    - vfx
-    volumeMounts: *houdini-volumeMounts
-    volumes: *houdini-volumes
-  - name: houdini-gpu-a4000
-    enabled: true
-    image: registry.gitlab.com/coreweave/render-images/houdini-base-glx:1
-    users: *users
-    pulse:
-      enabled: false
-    scale:
-      maxReplicas: 1000
-      minReplicas: 0
-      pollingNames:
-      - name: houdini-gpu-a4000
-        type: Group
-      scalingFactor: 1
-    affinity:
-      nodeAffinity:
-        requiredDuringSchedulingIgnoredDuringExecution:
-          nodeSelectorTerms:
-          - matchExpressions:
-            - key: gpu.nvidia.com/class
-              operator: In
-              values:
-              - RTX_A4000
-        preferredDuringSchedulingIgnoredDuringExecution:
-        - preference:
-            matchExpressions:
-            - key: topology.kubernetes.io/region
-              operator: In
-              values:
-              - LGA1
-          weight: 100
-    resources:
-      limits:
-        cpu: 30
-        memory: 120Gi
-        nvidia.com/gpu: 1
-      requests:
-        cpu: 30
-        memory: 120Gi
-        nvidia.com/gpu: 1
-    env: *houdini-env
-    groups:
-    - houdini-gpu-a4000
-    pools:
-    - vfx
-    volumeMounts: *houdini-volumeMounts
-    volumes: *houdini-volumes
-  - name: houdini-gpu-a5000
-    enabled: true
-    image: registry.gitlab.com/coreweave/render-images/houdini-base-glx:1
-    users: *users
-    pulse:
-      enabled: false
-    scale:
-      maxReplicas: 1000
-      minReplicas: 0
-      pollingNames:
-      - name: houdini-gpu-a6000
-        type: Group
-      scalingFactor: 1
-    affinity:
-      nodeAffinity:
-        requiredDuringSchedulingIgnoredDuringExecution:
-          nodeSelectorTerms:
-          - matchExpressions:
-            - key: gpu.nvidia.com/class
-              operator: In
-              values:
-              - RTX_A5000
-        preferredDuringSchedulingIgnoredDuringExecution:
-        - preference:
-            matchExpressions:
-            - key: topology.kubernetes.io/region
-              operator: In
-              values:
-              - LGA1
-          weight: 100
-    resources:
-      limits:
-        cpu: 16
-        memory: 120Gi
-        nvidia.com/gpu: 1
-      requests:
-        cpu: 16
-        memory: 120Gi
-        nvidia.com/gpu: 1
-    env: *houdini-env
-    groups:
-    - houdini-gpu-a5000
-    pools:
-    - vfx
-    volumeMounts: *houdini-volumeMounts
-    volumes: *houdini-volumes
-  - name: houdini-gpu-a6000
-    enabled: true
-    image: registry.gitlab.com/coreweave/render-images/houdini-base-glx:1
-    pulse:
-      enabled: false
-    users: *users
-    scale:
-      maxReplicas: 1000
-      minReplicas: 0
-      pollingNames:
-      - name: houdini-gpu-a6000
-        type: Group
-      scalingFactor: 1
-    affinity:
-      nodeAffinity:
-        requiredDuringSchedulingIgnoredDuringExecution:
-          nodeSelectorTerms:
-          - matchExpressions:
-            - key: gpu.nvidia.com/class
-              operator: In
-              values:
-              - RTX_A6000
-        preferredDuringSchedulingIgnoredDuringExecution:
-        - preference:
-            matchExpressions:
-            - key: topology.kubernetes.io/region
-              operator: In
-              values:
-              - LGA1
-          weight: 100
-    resources:
-      limits:
-        cpu: 16
-        memory: 120Gi
-        nvidia.com/gpu: 1
-      requests:
-        cpu: 16
-        memory: 120Gi
-        nvidia.com/gpu: 1
-    env: *houdini-env
-    groups:
-    - houdini-gpu-a6000
-    pools:
-    - vfx
-    volumeMounts: *houdini-volumeMounts
-    volumes: *houdini-volumes
-  - name: nuke-cpu-epyc
-    enabled: true
-    image: registry.gitlab.com/coreweave/render-images/nuke-base:1
-    users: *users
-    affinity:
-      nodeAffinity:
-        preferredDuringSchedulingIgnoredDuringExecution:
-        - preference:
-            matchExpressions:
-            - key: topology.kubernetes.io/region
-              operator: In
-              values:
-              - LGA1
-          weight: 100
-        requiredDuringSchedulingIgnoredDuringExecution:
-          nodeSelectorTerms:
-          - matchExpressions:
-            - key: cpu.coreweave.cloud/family
-              operator: In
-              values:
-              - epyc
-            - key: node.coreweave.cloud/class
-              operator: In
-              values:
-              - cpu
-    env: &nuke_env
-    - name: NUKE_PATH
-      value: /mnt/software/nuke/plugins
-    groups:
-    - nuke-cpu-epyc
-    pools:
-    - compositing
-    preStop:
+deadline:
+  workers:
+    images:
+    - name: houdini-cpu-epyc
       enabled: true
-    pulse:
-      enabled: false
-    resources:
-      limits:
-        cpu: 15
-        memory: 60Gi
-      requests:
-        cpu: 15
-        memory: 60Gi
-    scale:
-      maxReplicas: 1000
-      minReplicas: 0
-      pollingNames:
-      - name: nuke-cpu-epyc
-        type: Group
-      scalingFactor: 1
-    volumeMounts: &nuke-volumeMounts
-    - name: render-output # Mounting in our PVC as /data so it's accessible to our pod.
-      mountPath: /mnt/render-output
-    - name: software
-      mountPath: /mnt/software
-    - name: assets
-      mountPath: /mnt/assets
-    - name: demo-project-1
-      mountPath: /mnt/projects/demo-project-1
-    - name: completed
-      mountPath: /mnt/completed
-    volumes: &nuke-volumes
-    - name: render-output
-      persistentVolumeClaim:
-        claimName: render-output-lga1
-    - name: software
-      persistentVolumeClaim:
-        claimName: software-lga1
-    - name: assets
-      persistentVolumeClaim:
-        claimName: assets-lga1
-    - name: demo-project-1
-      persistentVolumeClaim:
-        claimName: demo-project-1-lga1
-    - name: completed
-      persistentVolumeClaim:
-        claimName: completed-lga1
-  - name: nuke-cpu-xeon
-    enabled: true
-    image: registry.gitlab.com/coreweave/render-images/nuke-base:1
-    users: *users
-    affinity:
-      nodeAffinity:
-        preferredDuringSchedulingIgnoredDuringExecution:
-        - preference:
-            matchExpressions:
-            - key: topology.kubernetes.io/region
-              operator: In
-              values:
-              - LGA1
-          weight: 100
-        requiredDuringSchedulingIgnoredDuringExecution:
-          nodeSelectorTerms:
-          - matchExpressions:
-            - key: cpu.coreweave.cloud/family
-              operator: In
-              values:
-              - intel-xeon-v3
-              - intel-xeon-v4
-            - key: node.coreweave.cloud/class
-              operator: In
-              values:
-              - cpu
-    env: &nuke_env
-    - name: NUKE_PATH
-      value: /mnt/software/nuke/plugins
-    groups:
-    - nuke-cpu-xeon
-    pools:
-    - compositing
-    preStop:
+      image: registry.gitlab.com/coreweave/render-images/houdini-base:1
+      users: &users
+      - userName: render
+        groupName: service
+        uid: 3001
+        gid: 3001
+        home: /home/render
+        shell: /bin/bash
+        renderUser: true
+      pulse:
+        enabled: false
+      scale:
+        maxReplicas: 1000
+        minReplicas: 0
+        pollingNames:
+        - name: houdini-cpu-epyc
+          type: Group
+        scalingFactor: 1
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - preference:
+              matchExpressions:
+              - key: topology.kubernetes.io/region
+                operator: In
+                values:
+                - LGA1
+            weight: 100
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node.coreweave.cloud/cpu
+                operator: In
+                values:
+                - amd-epyc-rome
+                - amd-epyc-milan
+              - key: node.coreweave.cloud/class
+                operator: In
+                values:
+                - cpu
+      resources:
+        limits:
+          cpu: 35
+          memory: 130Gi
+        requests:
+          cpu: 35
+          memory: 129Gi
+      env: &houdini-env
+      - name: SESI_LMHOST
+        value: sidefx-ls-2.int.coreweave.com
+      - name: ARNOLD_LICENSE_ORDER
+        value: network
+      - name: ADSKFLEX_LICENSE_FILE
+        value: 2080@autodesk-ls.int.coreweave.com
+      - name: REDSHIFT_LICENSEPATH
+        value: "/mnt/software/licenses/cw-redshift.lic"
+      - name: HOUDINI_PATH
+        value: "/mnt/software/redshift/3.5.06/redshift4houdini/19.5.303:/opt/hfs19.0/bin:/opt/hfs19.0/houdini:/mnt/software/arnold/htoa/6.1.3.1"  
+      - name: LD_LIBRARY_PATH
+        value: /usr/local/nvidia/lib:/usr/local/nvidia/lib64
+      - name: NVIDIA_DRIVER_CAPABILITIES
+        value: all
+      - name: DISPLAY
+        value: ":8"
+      - name: HOUDINI_OCL_DEVICENUMBER
+        value: "'0'"
+      groups:
+      - houdini-cpu-epyc
+      pools:
+      - vfx
+      volumeMounts: &houdini-volumeMounts
+      - name: render-output # Mounting in our PVC as /data so it's accessible to our pod.
+        mountPath: /mnt/render-output
+      - name: software
+        mountPath: /mnt/software
+      - name: assets
+        mountPath: /mnt/assets
+      - name: demo-project-1
+        mountPath: /mnt/projects/demo-project-1
+      - name: completed
+        mountPath: /mnt/completed
+      volumes: &houdini-volumes
+      - name: render-output
+        persistentVolumeClaim:
+          claimName: render-output-lga1
+      - name: software
+        persistentVolumeClaim:
+          claimName: software-lga1
+      - name: assets
+        persistentVolumeClaim:
+          claimName: assets-lga1
+      - name: demo-project-1
+        persistentVolumeClaim:
+          claimName: demo-project-1-lga1
+      - name: completed
+        persistentVolumeClaim:
+          claimName: completed-lga1
+    - name: houdini-cpu-xeon
       enabled: true
-    pulse:
-      enabled: false
-    resources:
-      limits:
-        cpu: 15
-        memory: 60Gi
-      requests:
-        cpu: 15
-        memory: 60Gi
-    scale:
-      maxReplicas: 1000
-      minReplicas: 0
-      pollingNames:
-      - name: nuke-cpu-xeon
-        type: Group
-      scalingFactor: 1
-    volumeMounts: &nuke-volumeMounts
-    - name: render-output # Mounting in our PVC as /data so it's accessible to our pod.
-      mountPath: /mnt/render-output
-    - name: software
-      mountPath: /mnt/software
-    - name: assets
-      mountPath: /mnt/assets
-    - name: demo-project-1
-      mountPath: /mnt/projects/demo-project-1
-    - name: completed
-      mountPath: /mnt/completed
-    volumes: &nuke-volumes
-    - name: render-output
-      persistentVolumeClaim:
-        claimName: render-output-lga1
-    - name: software
-      persistentVolumeClaim:
-        claimName: software-lga1
-    - name: assets
-      persistentVolumeClaim:
-        claimName: assets-lga1
-    - name: demo-project-1
-      persistentVolumeClaim:
-        claimName: demo-project-1-lga1
-    - name: completed
-      persistentVolumeClaim:
-        claimName: completed-lga1
-  # - name: nuke-epyc
-  # - name: nuke-xeon
-  # - name: nuke-a4000
+      users: *users
+      image: registry.gitlab.com/coreweave/render-images/houdini-base:1
+      pulse:
+        enabled: false
+      scale:
+        maxReplicas: 1000
+        minReplicas: 0
+        pollingNames:
+        - name: houdini-cpu-xeon
+          type: Group
+        scalingFactor: 1
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node.coreweave.cloud/cpu
+                operator: In
+                values:
+                - intel-xeon-v3
+                - intel-xeon-v4
+              - key: node.coreweave.cloud/class
+                operator: In
+                values:
+                - cpu
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - preference:
+              matchExpressions:
+              - key: topology.kubernetes.io/region
+                operator: In
+                values:
+                - LGA1
+            weight: 100
+      resources:
+        limits:
+          cpu: 70
+          memory: 180Gi
+        requests:
+          cpu: 70
+          memory: 180Gi
+      env: *houdini-env
+      groups:
+      - houdini-cpu-xeon
+      pools:
+      - vfx
+      volumeMounts: *houdini-volumeMounts
+      volumes: *houdini-volumes
+    - name: houdini-gpu-a4000
+      enabled: true
+      image: registry.gitlab.com/coreweave/render-images/houdini-base-glx:1
+      users: *users
+      pulse:
+        enabled: false
+      scale:
+        maxReplicas: 1000
+        minReplicas: 0
+        pollingNames:
+        - name: houdini-gpu-a4000
+          type: Group
+        scalingFactor: 1
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: gpu.nvidia.com/class
+                operator: In
+                values:
+                - RTX_A4000
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - preference:
+              matchExpressions:
+              - key: topology.kubernetes.io/region
+                operator: In
+                values:
+                - LGA1
+            weight: 100
+      resources:
+        limits:
+          cpu: 30
+          memory: 120Gi
+          nvidia.com/gpu: 1
+        requests:
+          cpu: 30
+          memory: 120Gi
+          nvidia.com/gpu: 1
+      env: *houdini-env
+      groups:
+      - houdini-gpu-a4000
+      pools:
+      - vfx
+      volumeMounts: *houdini-volumeMounts
+      volumes: *houdini-volumes
+    - name: houdini-gpu-a5000
+      enabled: true
+      image: registry.gitlab.com/coreweave/render-images/houdini-base-glx:1
+      users: *users
+      pulse:
+        enabled: false
+      scale:
+        maxReplicas: 1000
+        minReplicas: 0
+        pollingNames:
+        - name: houdini-gpu-a6000
+          type: Group
+        scalingFactor: 1
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: gpu.nvidia.com/class
+                operator: In
+                values:
+                - RTX_A5000
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - preference:
+              matchExpressions:
+              - key: topology.kubernetes.io/region
+                operator: In
+                values:
+                - LGA1
+            weight: 100
+      resources:
+        limits:
+          cpu: 16
+          memory: 120Gi
+          nvidia.com/gpu: 1
+        requests:
+          cpu: 16
+          memory: 120Gi
+          nvidia.com/gpu: 1
+      env: *houdini-env
+      groups:
+      - houdini-gpu-a5000
+      pools:
+      - vfx
+      volumeMounts: *houdini-volumeMounts
+      volumes: *houdini-volumes
+    - name: houdini-gpu-a6000
+      enabled: true
+      image: registry.gitlab.com/coreweave/render-images/houdini-base-glx:1
+      pulse:
+        enabled: false
+      users: *users
+      scale:
+        maxReplicas: 1000
+        minReplicas: 0
+        pollingNames:
+        - name: houdini-gpu-a6000
+          type: Group
+        scalingFactor: 1
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: gpu.nvidia.com/class
+                operator: In
+                values:
+                - RTX_A6000
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - preference:
+              matchExpressions:
+              - key: topology.kubernetes.io/region
+                operator: In
+                values:
+                - LGA1
+            weight: 100
+      resources:
+        limits:
+          cpu: 16
+          memory: 120Gi
+          nvidia.com/gpu: 1
+        requests:
+          cpu: 16
+          memory: 120Gi
+          nvidia.com/gpu: 1
+      env: *houdini-env
+      groups:
+      - houdini-gpu-a6000
+      pools:
+      - vfx
+      volumeMounts: *houdini-volumeMounts
+      volumes: *houdini-volumes
+    - name: nuke-cpu-epyc
+      enabled: true
+      image: registry.gitlab.com/coreweave/render-images/nuke-base:1
+      users: *users
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - preference:
+              matchExpressions:
+              - key: topology.kubernetes.io/region
+                operator: In
+                values:
+                - LGA1
+            weight: 100
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: cpu.coreweave.cloud/family
+                operator: In
+                values:
+                - epyc
+              - key: node.coreweave.cloud/class
+                operator: In
+                values:
+                - cpu
+      env: &nuke_env
+      - name: NUKE_PATH
+        value: /mnt/software/nuke/plugins
+      groups:
+      - nuke-cpu-epyc
+      pools:
+      - compositing
+      preStop:
+        enabled: true
+      pulse:
+        enabled: false
+      resources:
+        limits:
+          cpu: 15
+          memory: 60Gi
+        requests:
+          cpu: 15
+          memory: 60Gi
+      scale:
+        maxReplicas: 1000
+        minReplicas: 0
+        pollingNames:
+        - name: nuke-cpu-epyc
+          type: Group
+        scalingFactor: 1
+      volumeMounts: &nuke-volumeMounts
+      - name: render-output # Mounting in our PVC as /data so it's accessible to our pod.
+        mountPath: /mnt/render-output
+      - name: software
+        mountPath: /mnt/software
+      - name: assets
+        mountPath: /mnt/assets
+      - name: demo-project-1
+        mountPath: /mnt/projects/demo-project-1
+      - name: completed
+        mountPath: /mnt/completed
+      volumes: &nuke-volumes
+      - name: render-output
+        persistentVolumeClaim:
+          claimName: render-output-lga1
+      - name: software
+        persistentVolumeClaim:
+          claimName: software-lga1
+      - name: assets
+        persistentVolumeClaim:
+          claimName: assets-lga1
+      - name: demo-project-1
+        persistentVolumeClaim:
+          claimName: demo-project-1-lga1
+      - name: completed
+        persistentVolumeClaim:
+          claimName: completed-lga1
+    - name: nuke-cpu-xeon
+      enabled: true
+      image: registry.gitlab.com/coreweave/render-images/nuke-base:1
+      users: *users
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - preference:
+              matchExpressions:
+              - key: topology.kubernetes.io/region
+                operator: In
+                values:
+                - LGA1
+            weight: 100
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: cpu.coreweave.cloud/family
+                operator: In
+                values:
+                - intel-xeon-v3
+                - intel-xeon-v4
+              - key: node.coreweave.cloud/class
+                operator: In
+                values:
+                - cpu
+      env: &nuke_env
+      - name: NUKE_PATH
+        value: /mnt/software/nuke/plugins
+      groups:
+      - nuke-cpu-xeon
+      pools:
+      - compositing
+      preStop:
+        enabled: true
+      pulse:
+        enabled: false
+      resources:
+        limits:
+          cpu: 15
+          memory: 60Gi
+        requests:
+          cpu: 15
+          memory: 60Gi
+      scale:
+        maxReplicas: 1000
+        minReplicas: 0
+        pollingNames:
+        - name: nuke-cpu-xeon
+          type: Group
+        scalingFactor: 1
+      volumeMounts: &nuke-volumeMounts
+      - name: render-output # Mounting in our PVC as /data so it's accessible to our pod.
+        mountPath: /mnt/render-output
+      - name: software
+        mountPath: /mnt/software
+      - name: assets
+        mountPath: /mnt/assets
+      - name: demo-project-1
+        mountPath: /mnt/projects/demo-project-1
+      - name: completed
+        mountPath: /mnt/completed
+      volumes: &nuke-volumes
+      - name: render-output
+        persistentVolumeClaim:
+          claimName: render-output-lga1
+      - name: software
+        persistentVolumeClaim:
+          claimName: software-lga1
+      - name: assets
+        persistentVolumeClaim:
+          claimName: assets-lga1
+      - name: demo-project-1
+        persistentVolumeClaim:
+          claimName: demo-project-1-lga1
+      - name: completed
+        persistentVolumeClaim:
+          claimName: completed-lga1
+    # - name: nuke-epyc
+    # - name: nuke-xeon
+    # - name: nuke-a4000
