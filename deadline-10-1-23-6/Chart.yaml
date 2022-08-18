@@ -16,6 +16,6 @@ appVersion: 0.0.1
 
 dependencies:
   - name: deadline
-    version: 1.20.0
+    version: 0.1.20
     repository: http://helm.corp.ingress.ord1.coreweave.com
     enabled: true
