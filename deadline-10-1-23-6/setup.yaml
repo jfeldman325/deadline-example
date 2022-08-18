@@ -1,0 +1,82 @@
+global:
+  pipelineCommit: 88d215fa 
+  version: 10.1.23.6
+  branch: master
+
+rcs:
+  pass: Pb-CW->Au
+  resources:
+    limits:
+      cpu: 4
+      memory: 2Gi
+    requests:
+      cpu: "4"
+      memory: 2Gi
+  service:
+    name: rcs
+    annotations:
+      external-dns.alpha.kubernetes.io/hostname: rcs.tenant-alkemyx.coreweave.cloud  
+
+pulse:
+  enabled: true
+  resources:
+    limits:
+      cpu: 2
+      memory: 1Gi
+    requests:
+      cpu: "2"
+      memory: 1Gi
+
+licenseForwarder:
+  enabled: true
+  service:
+      ports:
+      - name: proxy-4
+        port: 1714
+        protocol: TCP
+        targetPort: 1714
+      - name: proxy-5
+        port: 1716
+        protocol: TCP
+        targetPort: 1716
+  auth:
+    secrets:
+      name: thirdpartylicenses
+  ports:
+    - containerPort: 1714
+    - containerPort: 1716
+
+repository:
+  affinity: &controlPlaneAffinity
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: cpu.coreweave.cloud/family
+                operator: In
+                values:
+                  - epyc
+              - key: topology.kubernetes.io/region
+                operator: In
+                values:
+                  - LGA1
+              - key: node.coreweave.cloud/class
+                operator: In
+                values:
+                  - cpu
+  pvc:
+    storageClassName: shared-nvme-lga1
+mongodb:
+  UpdateStrategy:
+    type: "OnDelete"
+  resources:
+    limits:
+      cpu: 4
+      memory: 16Gi
+    requests:
+      cpu: "4"
+      memory: 16Gi
+  persistence:
+    storageClass: block-nvme-lga1
+  global:
+    storageClass: block-nvme-lga1

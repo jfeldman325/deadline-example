@@ -1,0 +1,21 @@
+apiVersion: v2
+name: deadline-10-1-23-6
+description: Fully managed Thinkbox Deadline Repository with worker Auto-Scaling
+icon: https://coreweave.com/images/icons/deadline.png
+type: application
+
+# This is the chart version. This version number should be incremented each time you make changes
+# to the chart and its templates, including the app version.
+# Versions are expected to follow Semantic Versioning (https://semver.org/)
+version: 0.0.1
+
+# This is the version number of the application being deployed. This version number should be
+# incremented each time you make changes to the application. Versions are not expected to
+# follow Semantic Versioning. They should reflect the version the application is using.
+appVersion: 0.0.1
+
+dependencies:
+  - name: deadline
+    version: 1.20.0
+    repository: http://helm.corp.ingress.ord1.coreweave.com
+    enabled: true
