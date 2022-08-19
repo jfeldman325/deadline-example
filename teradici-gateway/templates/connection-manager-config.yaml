@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cm-config-{{.Release.Name}}
+  labels:
+data:
+  ConnectionManager.conf: |-
+    # SecurityGatewayEnabled: Specify true or false.
+    SecurityGatewayEnabled = true
+    # LogLevel: Specify one of TRACE, DEBUG, INFO, WARN, ERROR.
+    # All messages at or above the configured level will be written to the log.
+    LogLevel = INFO
+    # BrokerType: Specify PCoIP
+    BrokerType = PCoIP
+    # Address of PCoIP Connection broker. 
+    PcoipAddress = {{.Values.gateway.connectionManager.pcoipAddress}}
+
+    # LicenseServerAddress: Specify http://<ip-address-or-host-name>:<port>/request.
+    LicenseServerAddress = {{.Values.gateway.connectionManager.licenseServerAddress}}
+
+    # --- Security settings
+    # Please refer to product documentation for more information
+    BrokerCertCheck = false
+    BrokerCertMinKeyLength = 1024
+    AgentCertCheck = false
+    AgentCertMinKeyLength = 1024
+
+    # --- The following settings are optional and generally should not be modified.
+    ContentLengthEnabled = false
+    BrokerMaxRespWaitSeconds = 20
+    BrokerMaxAllocateWaitSeconds = 60
+    BrokerMaxAuthenticateWaitSeconds = 30
+    AgentMaxRespWaitSeconds = 160
+    AgentPcoipBrokerProtocolMaxRespWaitSeconds = 20
+    AgentPcoipBrokerProtocolMaxAllocateWaitSeconds = 200
+    AgentPcoipBrokerProtocolMaxAuthenticateWaitSeconds = 30
+

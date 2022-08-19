@@ -1,0 +1,27 @@
+# Default values for teradici-gateway.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+gateway:
+  region: LGA1
+  addPublicIP: true
+  connectionManager:
+    # The Connection Broker Address
+    pcoipAddress: "216.153.60.228"
+    # Teridici License Server Address
+    licenseServerAddress: "http://207.53.234.135:7070/request"
+    resources:
+      limits:
+        cpu: 8
+        memory: 30Gi
+      requests:
+        cpu: 1
+        memory: 4Gi
+  securityGateway:
+    resources:
+      limits:
+        cpu: 8
+        memory: 30Gi
+      requests:
+        cpu: 1
+        memory: 4Gi

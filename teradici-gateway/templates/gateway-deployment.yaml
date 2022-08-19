@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: teradici-gateway-{{.Release.Name}}
+  labels:
+    app: teradici-gateway-{{.Release.Name}}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: teradici-gateway-{{.Release.Name}}
+  template:
+    metadata:
+      labels:
+        app: teradici-gateway-{{.Release.Name}}
+      annotations:
+        net.coreweave.cloud/attachLoadbalancerIP: teradici-gateway-{{.Release.Name}}
+    spec:
+      affinity: 
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                - key: cpu.coreweave.cloud/family
+                  operator: In
+                  values:
+                    - epyc
+                - key: topology.kubernetes.io/region
+                  operator: In
+                  values:
+                    - {{ .Values.gateway.region }}
+                - key: node.coreweave.cloud/class
+                  operator: In
+                  values:
+                    - cpu
+      containers:
+        - name: connection-manager
+          command: ["/bin/bash","-c","/etc/init.d/connection_manager start"]
+        {{- if .Values.gateway.connectionManager.resources }}
+          resources:
+{{ toYaml .Values.gateway.connectionManager.resources | indent 12 }}
+        {{- end }}
+          image: coreweave/teradici-gateway
+          volumeMounts:
+          - name: cm-config
+            mountPath: /etc/ConnectionManager.conf
+            subPath: ConnectionManager.conf
+          - name: sg-config
+            mountPath: /etc/SecurityGateway.conf
+            subPath: SecurityGateway.conf
+        - name: security-gateway
+          command: ["/bin/bash","-c","/tmp/sg_startup.sh"]
+        {{- if .Values.gateway.connectionManager.resources }}
+          resources:
+{{ toYaml .Values.gateway.securityGateway.resources | indent 12 }}
+        {{- end }}
+          image:  coreweave/teradici-gateway
+          volumeMounts:
+          - name: cm-config
+            mountPath: /etc/ConnectionManager.conf
+            subPath: ConnectionManager.conf
+          - name: sg-config
+            mountPath: /etc/SecurityGateway.conf
+            subPath: SecurityGateway.conf
+      volumes:
+        - name: cm-config
+          configMap:
+            name: cm-config-{{.Release.Name}}
+        - name: sg-config
+          configMap:
+            name: sg-config-{{.Release.Name}}
+      
