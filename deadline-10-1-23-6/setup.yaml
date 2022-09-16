@@ -5,7 +5,7 @@ deadline:
     branch: master
 
   rcs:
-    pass: Pb-CW->Au
+    pass: thisIsMyPassword12345
     resources:
       limits:
         cpu: 4
